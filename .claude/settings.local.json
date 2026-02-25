@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter doctor:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
+    ]
+  },
+  "prefersReducedMotion": true,
+  "outputStyle": "Learning"
+}
