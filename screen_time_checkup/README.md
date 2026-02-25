@@ -32,10 +32,16 @@ flutter run -d chrome
 ### Build for production
 
 ```bash
-flutter build web --base-href /your-repo-name/
+flutter build web --base-href "/screentimecheckup/"
 ```
 
-The output in `build/web/` is a self-contained static site ready for GitHub Pages or any static host.
+The output in `build/web/` is a self-contained static site ready for GitHub Pages. To push to GitHub Pages, run the following commands:
+```bash
+cd build/web
+git add .
+git commit -m "Commit Message"
+git push
+```
 
 ## Project Structure
 
