@@ -19,6 +19,30 @@ class NotificationServiceImpl implements NotificationServiceInterface {
 
   @override
   Future<void> initialize() async {
+    // Listen for messages posted back from the service worker.
+    // The SW sends {type: 'snooze', minutes: N} when a snooze action is tapped,
+    // and {type: 'tap'} when the notification body itself is tapped.
+    try {
+      web.window.navigator.serviceWorker.addEventListener(
+        'message',
+        ((web.MessageEvent event) {
+          final data = event.data.dartify();
+          if (data is Map) {
+            final type = data['type'] as String?;
+            if (type == 'snooze') {
+              final minutes = (data['minutes'] as num?)?.toInt() ?? 5;
+              snoozeCheckIn(Duration(minutes: minutes));
+            } else if (type == 'tap') {
+              _onTapCallback?.call();
+              web.window.focus();
+            }
+          }
+        }).toJS,
+      );
+    } catch (e) {
+      web.console.log('SW message listener not available: $e'.toJS);
+    }
+
     web.document.addEventListener(
       'visibilitychange',
       ((web.Event event) {
@@ -133,45 +157,64 @@ class NotificationServiceImpl implements NotificationServiceInterface {
 
   void _showNotification() {
     _lastNotificationFiredAt = DateTime.now();
-    web.console.log('Notification permission: ${web.Notification.permission}'.toJS);
-    if (web.Notification.permission == 'granted') {
-      final (title, body) = _messagePicker?.call() ??
-          ('Time to check in!', 'What are you doing right now?');
-      final options = web.NotificationOptions(
-        body: body,
-        icon: 'icons/Icon-192.png',
-        requireInteraction: true,
-      );
-      final notification = web.Notification(title, options);
-      web.console.log('Notification created'.toJS);
-
-      notification.addEventListener(
-        'click',
-        ((web.Event event) {
-          _onTapCallback?.call();
-          web.window.focus();
-          notification.close();
-        }).toJS,
-      );
-
-      notification.addEventListener(
-        'error',
-        ((web.Event event) {
-          web.console.error('Notification error occurred'.toJS);
-        }).toJS,
-      );
-
-      notification.addEventListener(
-        'show',
-        ((web.Event event) {
-          web.console.log('Notification shown successfully'.toJS);
-        }).toJS,
-      );
-    } else {
+    if (web.Notification.permission != 'granted') {
       web.console.warn(
           'Notification permission not granted: ${web.Notification.permission}'
               .toJS);
+      return;
     }
+
+    final (title, body) = _messagePicker?.call() ??
+        ('Time to check in!', 'What are you doing right now?');
+
+    // Prefer showing via the service worker so action buttons (Snooze) appear.
+    // Falls back to a plain Notification if the SW controller is not yet active.
+    try {
+      final controller = web.window.navigator.serviceWorker.controller;
+      if (controller != null) {
+        controller.postMessage(
+          <String, String>{
+            'type': 'showNotification',
+            'title': title,
+            'body': body,
+          }.jsify(),
+        );
+        web.console.log('Notification sent via service worker'.toJS);
+        return;
+      }
+    } catch (e) {
+      web.console.log('SW not available, using fallback notification: $e'.toJS);
+    }
+
+    _showFallbackNotification(title, body);
+  }
+
+  /// Plain notification without action buttons — used when the SW is not yet
+  /// controlling the page (e.g. very first load before SW activates).
+  void _showFallbackNotification(String title, String body) {
+    final options = web.NotificationOptions(
+      body: body,
+      icon: 'icons/Icon-192.png',
+      requireInteraction: true,
+    );
+    final notification = web.Notification(title, options);
+    web.console.log('Fallback notification created'.toJS);
+
+    notification.addEventListener(
+      'click',
+      ((web.Event event) {
+        _onTapCallback?.call();
+        web.window.focus();
+        notification.close();
+      }).toJS,
+    );
+
+    notification.addEventListener(
+      'error',
+      ((web.Event event) {
+        web.console.error('Notification error occurred'.toJS);
+      }).toJS,
+    );
   }
 
   @override
