@@ -18,6 +18,7 @@ class _LoggerPageState extends State<LoggerPage> {
   double _adherenceValue = 5.0;
   bool _showNotes = false;
   bool _tagsInitialized = false;
+  bool _intentionChecked = false;
 
   final TextEditingController _notesController = TextEditingController();
 
@@ -27,6 +28,15 @@ class _LoggerPageState extends State<LoggerPage> {
     if (!_tagsInitialized) {
       _tagsInitialized = true;
       final appState = context.read<AppState>();
+      if (!_intentionChecked) {
+        _intentionChecked = true;
+        if (appState.shouldPromptForIntentionOnCheckin) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _showIntentionPromptDialog(context, appState);
+          });
+        }
+      }
+
       if (appState.sortedLogs.isNotEmpty) {
         // Pre-populate "should do" from the last check-in — it usually stays
         // constant within a session. "Doing" is left blank since that's the
@@ -46,6 +56,106 @@ class _LoggerPageState extends State<LoggerPage> {
   void dispose() {
     _notesController.dispose();
     super.dispose();
+  }
+
+  void _showIntentionPromptDialog(BuildContext context, AppState appState) {
+    final isStale = appState.intentionLastConfirmedAt != null &&
+        DateTime.now().difference(appState.intentionLastConfirmedAt!) >=
+            const Duration(hours: 2);
+    final currentIntention = appState.settings.sessionIntention;
+    final controller = TextEditingController(text: currentIntention);
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        if (isStale) {
+          // TODO(human): build the "stale intention" dialog variant here.
+          // The user has been on the same intention for 2+ hours.
+          // Show the current intention prominently and offer two actions:
+          //   1. "Keep going" — calls appState.acknowledgeIntentionPrompt() then pops
+          //   2. "Change it" — calls appState.updateSessionIntention(newText) then pops
+          // Return a placeholder for now:
+          return AlertDialog(
+            title: const Text('Still on track?'),
+            content: Text(
+              'You\'ve been focused on "$currentIntention" for over 2 hours.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  appState.acknowledgeIntentionPrompt();
+                  Navigator.of(ctx).pop();
+                },
+                child: const Text('Keep going'),
+              ),
+              TextButton(
+                onPressed: () {
+                  appState.acknowledgeIntentionPrompt();
+                  Navigator.of(ctx).pop();
+                  _showIntentionPromptDialog(context, appState);
+                },
+                child: const Text('Change It'),
+              ),
+            ],
+          );
+        }
+
+        // First check-in of the session — prompt to set or confirm intention.
+        return AlertDialog(
+          title: const Text('What\'s your focus?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Set your intention for this session before checking in.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  hintText: 'e.g. Finish the project proposal',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (value) {
+                  if (value.trim().isNotEmpty) {
+                    appState.updateSessionIntention(value.trim());
+                  } else {
+                    appState.acknowledgeIntentionPrompt();
+                  }
+                  Navigator.of(ctx).pop();
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                appState.acknowledgeIntentionPrompt();
+                Navigator.of(ctx).pop();
+              },
+              child: const Text('Skip'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value = controller.text.trim();
+                if (value.isNotEmpty) {
+                  appState.updateSessionIntention(value);
+                } else {
+                  appState.acknowledgeIntentionPrompt();
+                }
+                Navigator.of(ctx).pop();
+              },
+              child: const Text('Set intention'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _submitLog(AppState appState) async {

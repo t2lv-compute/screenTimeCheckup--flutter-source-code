@@ -37,6 +37,10 @@ class AppState extends ChangeNotifier {
   final _random = Random();
   String? _lastShownMessageId;
 
+  // Session intention prompting — runtime only, resets on every app load.
+  bool _intentionPromptedThisSession = false;
+  DateTime? _intentionLastConfirmedAt;
+
   // Pagination
   static const int _logsPerPage = 20;
   int _displayedLogsCount = _logsPerPage;
@@ -626,7 +630,29 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  DateTime? get intentionLastConfirmedAt => _intentionLastConfirmedAt;
+
+  /// True when the logger should prompt the user to confirm/set their intention.
+  /// Triggers on the first check-in of each app session, and again if the same
+  /// intention has been active for 2+ hours without being refreshed.
+  bool get shouldPromptForIntentionOnCheckin {
+    if (!_intentionPromptedThisSession) return true;
+    final confirmed = _intentionLastConfirmedAt;
+    if (confirmed == null) return false;
+    return DateTime.now().difference(confirmed) >= const Duration(hours: 2);
+  }
+
+  /// Call after showing the intention prompt so it doesn't re-appear until
+  /// the next session or the 2-hour threshold is reached again.
+  void acknowledgeIntentionPrompt() {
+    _intentionPromptedThisSession = true;
+    _intentionLastConfirmedAt = DateTime.now();
+  }
+
   Future<void> updateSessionIntention(String intention) async {
+    // Confirming an intention counts as acknowledging the prompt.
+    _intentionPromptedThisSession = true;
+    _intentionLastConfirmedAt = DateTime.now();
     _settings = _settings.copyWith(sessionIntention: intention);
     try {
       await _storage.saveSettings(_settings);
