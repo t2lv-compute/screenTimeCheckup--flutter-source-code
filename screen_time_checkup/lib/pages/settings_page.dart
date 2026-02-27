@@ -507,7 +507,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   OutlinedButton.icon(
                     onPressed: () => _showTroubleshootDialog(context),
                     icon: const Icon(Icons.help_outline),
-                    label: const Text('Troubleshoot Notifications'),
+                    label: const Text('Troubleshoot'),
                   ),
                   ],
                   ),

@@ -25,6 +25,7 @@ class _HomePageState extends State<HomePage> {
   Timer? _countdownTimer;
   DateTime? _prevNextNotificationTime;
   DateTime? _prevScheduledAt;
+  bool _intentionPromptShown = false;
 
   static const List<SectionConfig> _allSections = [
     SectionConfig(id: 'timer', label: 'Next Check-in'),
@@ -472,6 +473,58 @@ class _HomePageState extends State<HomePage> {
     return '${diff.inDays}d ago';
   }
 
+  void _showIntentionPrompt(BuildContext context, AppState appState) {
+    final controller = TextEditingController();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Set your intention'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'What do you want to focus on this session?',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'e.g. Finish the project proposal',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (value) {
+                if (value.trim().isNotEmpty) {
+                  appState.updateSessionIntention(value.trim());
+                }
+                Navigator.of(ctx).pop();
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Skip'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = controller.text.trim();
+              if (value.isNotEmpty) {
+                appState.updateSessionIntention(value);
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Set intention'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _openCustomizationSheet(BuildContext context, AppState appState) {
     showPageCustomizationSheet(
       context: context,
@@ -492,6 +545,14 @@ class _HomePageState extends State<HomePage> {
 
     if (appState.isLoading) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (!_intentionPromptShown &&
+        appState.settings.sessionIntention.isEmpty) {
+      _intentionPromptShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showIntentionPrompt(context, appState);
+      });
     }
 
     final settings = appState.settings;

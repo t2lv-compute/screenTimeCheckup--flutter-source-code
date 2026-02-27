@@ -167,12 +167,13 @@ class NotificationServiceImpl implements NotificationServiceInterface {
     final (title, body) = _messagePicker?.call() ??
         ('Time to check in!', 'What are you doing right now?');
 
-    // Use serviceWorker.ready (not .controller) so this works even on the
-    // very first page load, before the SW has claimed the client.
-    // On Android, new Notification() from a page context is not allowed —
-    // registration.showNotification() via SW is required.
+    // Use serviceWorker.ready so this works even before the SW has claimed
+    // the client. The 2s timeout guards against dev mode (flutter run) and
+    // browsers where no SW is registered — ready never resolves there, so
+    // without a timeout the notification would silently hang forever.
     try {
-      final reg = await web.window.navigator.serviceWorker.ready.toDart;
+      final reg = await web.window.navigator.serviceWorker.ready.toDart
+          .timeout(const Duration(seconds: 2));
       final active = reg.active;
       if (active != null) {
         active.postMessage(

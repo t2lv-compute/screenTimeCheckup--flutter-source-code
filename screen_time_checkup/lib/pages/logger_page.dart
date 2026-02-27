@@ -16,8 +16,31 @@ class _LoggerPageState extends State<LoggerPage> {
   String? _doingTag;
   String? _shouldDoTag;
   double _adherenceValue = 5.0;
+  bool _showNotes = false;
+  bool _tagsInitialized = false;
 
   final TextEditingController _notesController = TextEditingController();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_tagsInitialized) {
+      _tagsInitialized = true;
+      final appState = context.read<AppState>();
+      if (appState.sortedLogs.isNotEmpty) {
+        // Pre-populate "should do" from the last check-in — it usually stays
+        // constant within a session. "Doing" is left blank since that's the
+        // variable the user needs to report fresh each time.
+        _shouldDoTag = appState.sortedLogs.first.shouldDoTag;
+        final lastAdherence = appState.sortedLogs.first.intentionAdherence;
+        if (lastAdherence != null) {
+          _adherenceValue = lastAdherence.toDouble();
+        } else {
+          _adherenceValue = 5.0;
+        }
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -299,12 +322,45 @@ class _LoggerPageState extends State<LoggerPage> {
           onChanged: (tag) => setState(() => _shouldDoTag = tag),
         ),
         const SizedBox(height: 16),
+
+        // Intention adherence — 3 quick-tap buttons instead of a slider
         const Text(
-                  'Did you stay on intention?',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          'Did you stay on intention?',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (final entry in const [
+              ('Not at all', 0.0),
+              ('Somewhat', 5.0),
+              ('Fully', 10.0),
+            ])
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: FilledButton.tonal(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _adherenceValue == entry.$2
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      foregroundColor: _adherenceValue == entry.$2
+                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () => setState(() => _adherenceValue = entry.$2),
+                    child: Text(entry.$1, style: const TextStyle(fontSize: 13)),
+                  ),
                 ),
-                const SizedBox(height: 8),
-          //const SizedBox(height: 16),
+              ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Notes — collapsed by default to reduce visual noise
+        if (_showNotes)
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -313,90 +369,38 @@ class _LoggerPageState extends State<LoggerPage> {
               border: Border.all(color: Theme.of(context).dividerColor),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                Row(
-                  children: [
-                    Text(
-                      'Not at all',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    Expanded(
-                      child: SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 12,
-                          ),
-                          overlayShape: const RoundSliderOverlayShape(
-                            overlayRadius: 22,
-                          ),
-                        ),
-                        child: Slider(
-                          value: _adherenceValue,
-                          min: 0,
-                          max: 10,
-                          divisions: 10,
-                          label: _adherenceValue.round().toString(),
-                          onChanged: (val) =>
-                              setState(() => _adherenceValue = val),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'Fully',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                const Text(
+                  'Notes',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                Text(
-                  'Current: ${_adherenceValue.round()}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _notesController,
+                  autofocus: true,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    hintText: 'Add context about what you\'re working on...',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
               ],
             ),
+          )
+        else
+          TextButton.icon(
+            onPressed: () => setState(() => _showNotes = true),
+            icon: const Icon(Icons.note_add_outlined, size: 18),
+            label: const Text('Add a note'),
+            style: TextButton.styleFrom(
+              foregroundColor:
+                  Theme.of(context).colorScheme.onSurfaceVariant,
+              padding: EdgeInsets.zero,
+            ),
           ),
-
-        const SizedBox(height: 16),
-
-        // Notes field (optional)
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Notes (optional)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _notesController,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  hintText: 'Add context about what you\'re working on...',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-              ),
-            ],
-          ),
-        ),
 
         const SizedBox(height: 16),
 
