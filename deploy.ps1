@@ -1,26 +1,38 @@
-# Define script parameters
 param(
     [Parameter(Mandatory=$true, HelpMessage="Enter the name of the commit")]
     [string]$CommitName
 )
+$ErrorActionPreference = "Stop";
+# Function for consistent status styling
+function Write-Status {
+    param([string]$Message)
+    Write-Host "`n>> $Message" -ForegroundColor Cyan -BackgroundColor Black
+}
 
-echo "Starting deployment process for commit: $CommitName";
-echo "Pulling latest changes from the repository...";
-git pull origin main;
-echo "Commiting source code changes with commit message: $CommitName";
-git add .;
-git commit -m "$CommitName";
-echo "Pushing changes to the repository...";
-git push origin main;
-echo "Building the project for web at base-href /screentimecheckup/";
-cd screen_time_checkup;
-flutter build web --base-href /screentimecheckup/;
-echo "Build process completed successfully!";
-cd build/web;
-echo "Deploying to GitHub Pages with commit message: $CommitName";
-git add .;
-git commit -m "$CommitName";
-echo "Pushing changes to the repository...";
-git push origin main;
-echo "Deployment process completed successfully!";
-cd ../../../;
+Write-Status "Starting deployment process for commit: $CommitName"
+
+Write-Status "Pulling latest changes from the repository..."
+git pull origin main
+
+Write-Status "Committing source code changes: $CommitName"
+git add .
+git commit -m "$CommitName"
+
+Write-Status "Pushing source changes..."
+git push origin main
+
+Write-Status "Building Flutter web project..."
+cd screen_time_checkup
+flutter build web --base-href /screentimecheckup/
+
+Write-Status "Building process complete. Preparing deployment..."
+cd build/web
+
+# Note: If this is a separate repo for GH Pages, ensure git is initialized here
+Write-Status "Deploying to GitHub Pages..."
+git add .
+git commit -m "$CommitName"
+git push origin main
+
+Write-Status "DEPLOYMENT SUCCESSFUL!"
+cd ../../../
