@@ -1,5 +1,6 @@
 import 'quick_preset.dart';
 
+
 class AppSettings {
   final List<String> focusTags;
   final List<String> distractionTags;
@@ -31,6 +32,15 @@ class AppSettings {
   final Map<String, double> notificationWeights;
 
   final List<QuickPreset> quickPresets;
+
+  // TODO(human): define the 3 default presets shown to new users.
+  // Each QuickPreset takes a doingTag and shouldDoTag from the default tag lists.
+  // Pick combinations that represent the most common real-world check-in scenarios.
+  static List<QuickPreset> get defaultPresets => [
+    QuickPreset(doingTag: 'work', shouldDoTag: 'work'), 
+    QuickPreset(doingTag: 'social media', shouldDoTag: 'work'), 
+    QuickPreset(doingTag: 'websurfing', shouldDoTag: 'work')
+  ];
 
   static const List<String> defaultFocusTags = [
     'school',

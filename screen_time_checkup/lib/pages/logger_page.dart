@@ -404,23 +404,6 @@ class _LoggerPageState extends State<LoggerPage> {
 
         const SizedBox(height: 16),
 
-        // Save as preset button (visible when both tags selected)
-        if (_doingTag != null && _shouldDoTag != null)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                await appState.addQuickPreset(_doingTag!, _shouldDoTag!);
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Preset saved')),
-                );
-              },
-              icon: const Icon(Icons.bookmark_add_outlined),
-              label: const Text('Save as preset'),
-            ),
-          ),
-
         const SizedBox(height: 8),
 
         // Submit button

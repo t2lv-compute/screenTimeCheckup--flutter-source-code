@@ -502,6 +502,12 @@ class AppState extends ChangeNotifier {
     _logger.debug('Loading settings...', 'AppState');
     _settings = await _storage.loadSettings();
 
+    // Seed default presets on first run (before user has created any).
+    if (_settings.quickPresets.isEmpty) {
+      _settings = _settings.copyWith(quickPresets: AppSettings.defaultPresets);
+      await _storage.saveSettings(_settings);
+    }
+
     _logger.debug('Loading logs...', 'AppState');
     _logs = await _storage.loadLogs();
     _invalidateStatsCache();
@@ -708,7 +714,34 @@ class AppState extends ChangeNotifier {
       }
     }
 
+    _updateDynamicPresets();
     notifyListeners();
+  }
+
+  /// Recomputes quick presets from log frequency after every check-in.
+  /// The top N most-used (doing, shouldDo) pairs replace the current preset list.
+  void _updateDynamicPresets() {
+    const maxPresets = 5;
+
+    // Count how often each (doing, shouldDo) pair has been logged.
+    final counts = <(String, String), int>{};
+    for (final log in _logs) {
+      if (log.isMissed) continue;
+      final key = (log.doingTag, log.shouldDoTag);
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+
+    // Sort by frequency descending and take the top N.
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final newPresets = sorted
+        .take(maxPresets)
+        .map((e) => QuickPreset(doingTag: e.key.$1, shouldDoTag: e.key.$2))
+        .toList();
+
+    _settings = _settings.copyWith(quickPresets: newPresets);
+    unawaited(_storage.saveSettings(_settings));
   }
 
   void setOpenedFromNotification(bool value) {
