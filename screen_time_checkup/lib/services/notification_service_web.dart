@@ -155,7 +155,7 @@ class NotificationServiceImpl implements NotificationServiceInterface {
     _messagePicker = picker;
   }
 
-  void _showNotification() {
+  Future<void> _showNotification() async {
     _lastNotificationFiredAt = DateTime.now();
     if (web.Notification.permission != 'granted') {
       web.console.warn(
@@ -167,12 +167,15 @@ class NotificationServiceImpl implements NotificationServiceInterface {
     final (title, body) = _messagePicker?.call() ??
         ('Time to check in!', 'What are you doing right now?');
 
-    // Prefer showing via the service worker so action buttons (Snooze) appear.
-    // Falls back to a plain Notification if the SW controller is not yet active.
+    // Use serviceWorker.ready (not .controller) so this works even on the
+    // very first page load, before the SW has claimed the client.
+    // On Android, new Notification() from a page context is not allowed —
+    // registration.showNotification() via SW is required.
     try {
-      final controller = web.window.navigator.serviceWorker.controller;
-      if (controller != null) {
-        controller.postMessage(
+      final reg = await web.window.navigator.serviceWorker.ready.toDart;
+      final active = reg.active;
+      if (active != null) {
+        active.postMessage(
           <String, String>{
             'type': 'showNotification',
             'title': title,
