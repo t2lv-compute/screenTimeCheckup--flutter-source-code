@@ -633,20 +633,31 @@ class AppState extends ChangeNotifier {
   DateTime? get intentionLastConfirmedAt => _intentionLastConfirmedAt;
 
   /// True when the logger should prompt the user to confirm/set their intention.
-  /// Triggers on the first check-in of each app session, and again if the same
-  /// intention has been active for 2+ hours without being refreshed.
+  /// Triggers on the first check-in of each app session, and again once the
+  /// configured session duration has elapsed without the intention being refreshed.
   bool get shouldPromptForIntentionOnCheckin {
     if (!_intentionPromptedThisSession) return true;
     final confirmed = _intentionLastConfirmedAt;
     if (confirmed == null) return false;
-    return DateTime.now().difference(confirmed) >= const Duration(hours: 2);
+    return DateTime.now().difference(confirmed) >=
+        Duration(minutes: _settings.sessionDurationMinutes);
   }
 
   /// Call after showing the intention prompt so it doesn't re-appear until
-  /// the next session or the 2-hour threshold is reached again.
+  /// the next session or the configured duration has elapsed.
   void acknowledgeIntentionPrompt() {
     _intentionPromptedThisSession = true;
     _intentionLastConfirmedAt = DateTime.now();
+  }
+
+  Future<void> updateSessionDuration(int minutes) async {
+    _settings = _settings.copyWith(sessionDurationMinutes: minutes);
+    try {
+      await _storage.saveSettings(_settings);
+    } on StorageException catch (e) {
+      _logger.error('Failed to update session duration', e, null, 'AppState');
+    }
+    notifyListeners();
   }
 
   Future<void> updateSessionIntention(String intention) async {

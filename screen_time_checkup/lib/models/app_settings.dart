@@ -31,6 +31,9 @@ class AppSettings {
   /// Missing keys default to 1.0. Updated after each notification response.
   final Map<String, double> notificationWeights;
 
+  /// How long a session lasts before the intention prompt re-appears (minutes).
+  final int sessionDurationMinutes;
+
   final List<QuickPreset> quickPresets;
 
   // TODO(human): define the 3 default presets shown to new users.
@@ -85,6 +88,7 @@ class AppSettings {
     this.remainingCheckIns = 0,
     List<QuickPreset>? quickPresets,
     Map<String, double>? notificationWeights,
+    this.sessionDurationMinutes = 120,
   })  : quickPresets = quickPresets ?? [],
         notificationWeights = notificationWeights ?? {},
         focusTags = focusTags ?? defaultFocusTags,
@@ -115,6 +119,7 @@ class AppSettings {
     int? remainingCheckIns,
     List<QuickPreset>? quickPresets,
     Map<String, double>? notificationWeights,
+    int? sessionDurationMinutes,
   }) =>
       AppSettings(
         focusTags: focusTags ?? this.focusTags,
@@ -135,6 +140,7 @@ class AppSettings {
         remainingCheckIns: remainingCheckIns ?? this.remainingCheckIns,
         quickPresets: quickPresets ?? this.quickPresets,
         notificationWeights: notificationWeights ?? this.notificationWeights,
+        sessionDurationMinutes: sessionDurationMinutes ?? this.sessionDurationMinutes,
       );
 
   Map<String, dynamic> toJson() => {
@@ -155,6 +161,7 @@ class AppSettings {
         'remainingCheckIns': remainingCheckIns,
         'quickPresets': quickPresets.map((p) => p.toJson()).toList(),
         'notificationWeights': notificationWeights,
+        'sessionDurationMinutes': sessionDurationMinutes,
       };
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
@@ -256,6 +263,7 @@ class AppSettings {
       notificationWeights: (json['notificationWeights'] as Map?)
               ?.map((k, v) => MapEntry(k as String, (v as num).toDouble())) ??
           {},
+      sessionDurationMinutes: json['sessionDurationMinutes'] as int? ?? 120,
     );
   }
 }

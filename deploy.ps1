@@ -73,4 +73,6 @@ if (Test-Path "screen_time_checkup") {
 Write-Host "DEPLOYMENT COMPLETED SUCCESSFULLY!" -ForegroundColor Green
 
 Write-Header "Opening localhost:8080 in browser for testing..."
+pushd screen_time_checkup
 Invoke-SafeCommand {flutter run -d edge --web-port=8080}
+popd 

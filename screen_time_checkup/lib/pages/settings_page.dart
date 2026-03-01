@@ -383,6 +383,39 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                   const SizedBox(height: 24),
+                  // Session duration — how long before the intention prompt reappears
+                  const Text(
+                    'Session Duration',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'How long before you\'re asked to re-confirm your intention',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  // TODO(human): add a DropdownButton<int> (or equivalent) here.
+                  // Call appState.updateSessionDuration(value) when the user picks.
+                  // Use appState.settings.sessionDurationMinutes as the current value.
+                  // Suggested options (minutes): 30, 60, 90, 120, 180, 240, 480.
+                  // Format the labels nicely (e.g. "30 min", "1 hour", "2 hours").
+                  DropdownButton<int>(value:120, items: const [
+                    DropdownMenuItem(value: 30, child: Text('30 min')),
+                    DropdownMenuItem(value: 60, child: Text('1 hour')),
+                    DropdownMenuItem(value: 90, child: Text('1.5 hours')),
+                    DropdownMenuItem(value: 120, child: Text('2 hours')),
+                    DropdownMenuItem(value: 180, child: Text('3 hours')),
+                    DropdownMenuItem(value: 240, child: Text('4 hours')),
+                    DropdownMenuItem(value: 480, child: Text('8 hours')),
+                  ], onChanged: (value) {
+                    if (value != null) {
+                      appState.updateSessionDuration(value);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Session duration set to ${value >= 60 ? '${value ~/ 60} hour${value > 60 ? 's' : ''}' : '$value min'}')),
+                      );
+                    }
+                  }),
+                  const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
