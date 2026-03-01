@@ -36,9 +36,6 @@ class AppSettings {
 
   final List<QuickPreset> quickPresets;
 
-  // TODO(human): define the 3 default presets shown to new users.
-  // Each QuickPreset takes a doingTag and shouldDoTag from the default tag lists.
-  // Pick combinations that represent the most common real-world check-in scenarios.
   static List<QuickPreset> get defaultPresets => [
     QuickPreset(doingTag: 'work', shouldDoTag: 'work'), 
     QuickPreset(doingTag: 'social media', shouldDoTag: 'work'), 

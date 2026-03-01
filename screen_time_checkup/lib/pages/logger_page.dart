@@ -30,7 +30,7 @@ class _LoggerPageState extends State<LoggerPage> {
       final appState = context.read<AppState>();
       if (!_intentionChecked) {
         _intentionChecked = true;
-        if (appState.shouldPromptForIntentionOnCheckin) {
+        if (appState.settings.hasSeenTutorial && appState.shouldPromptForIntentionOnCheckin) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) _showIntentionPromptDialog(context, appState);
           });
@@ -70,12 +70,6 @@ class _LoggerPageState extends State<LoggerPage> {
       barrierDismissible: false,
       builder: (ctx) {
         if (isStale) {
-          // TODO(human): build the "stale intention" dialog variant here.
-          // The user has been on the same intention for 2+ hours.
-          // Show the current intention prominently and offer two actions:
-          //   1. "Keep going" — calls appState.acknowledgeIntentionPrompt() then pops
-          //   2. "Change it" — calls appState.updateSessionIntention(newText) then pops
-          // Return a placeholder for now:
           return AlertDialog(
             title: const Text('Still on track?'),
             content: Text(

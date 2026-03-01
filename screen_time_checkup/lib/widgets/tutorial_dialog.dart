@@ -12,7 +12,7 @@ class TutorialDialog extends StatefulWidget {
 class _TutorialDialogState extends State<TutorialDialog> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  static const _totalPages = 3;
+  static const _totalPages = 4;
 
   @override
   void dispose() {
@@ -42,9 +42,11 @@ class _TutorialDialogState extends State<TutorialDialog> {
                     icon: Icons.timer_outlined,
                     title: 'Welcome to\nScreen Time Checkup',
                     body:
-                        'This app helps you stay aware of how you spend your time.\n\n'
-                        'You\'ll get periodic notifications asking you to check in '
-                        'on what you\'re doing.',
+                        'This app helps you stay honest about how you spend your time.\n\n'
+                        'You set a session intention, then get periodic check-ins '
+                        'asking what you\'re actually doing.\n\n'
+                        'Over time you\'ll see patterns — and close the gap between '
+                        'what you intend to do and what you end up doing.',
                   ),
                   _buildPage(
                     icon: Icons.category_outlined,
@@ -55,19 +57,30 @@ class _TutorialDialogState extends State<TutorialDialog> {
                         'to be doing (work, study, exercise...)\n\n'
                         'Distractions \u2014 the things that pull you off track '
                         '(social media, aimless browsing...)\n\n'
-                        'You can customize both lists in Settings.',
+                        'You can customise both lists in Settings.',
+                  ),
+                  _buildPage(
+                    icon: Icons.flag_outlined,
+                    title: 'Session Intentions',
+                    body:
+                        'Before you start working, set an intention \u2014 a short '
+                        'description of what you want to accomplish.\n\n'
+                        'Each check-in asks whether what you\'re doing matches that '
+                        'intention. After a while, you\'ll be prompted to confirm '
+                        'you\'re still on the same task or switch to a new one.\n\n'
+                        'You can set your intention any time from the home screen.',
                   ),
                   _buildPage(
                     icon: Icons.edit_note,
                     title: 'How Check-Ins Work',
                     body:
-                        'When you check in, you\'ll answer:\n\n'
-                        '1. What are you doing?\n'
-                        '    (any activity)\n\n'
-                        '2. What should you be doing?\n'
-                        '    (focus activities only)\n\n'
-                        'The app tracks whether you\'re on track and shows you '
-                        'patterns over time.',
+                        'When a check-in fires, you\'ll log:\n\n'
+                        '1. What you\'re doing right now\n'
+                        '2. What you should be doing\n'
+                        '3. How well you\'re sticking to your intention\n\n'
+                        'Quick presets let you answer in one tap for your most '
+                        'common combinations. The app tracks your on-track rate '
+                        'and shows trends in the Stats tab.',
                   ),
                 ],
               ),

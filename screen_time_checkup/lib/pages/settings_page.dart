@@ -219,6 +219,25 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               ExpansionTile(
                 tilePadding: EdgeInsets.zero,
+                title: const Text('Windows / Edge', style: TextStyle(fontWeight: FontWeight.bold)),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('1. Open Windows Settings > System > Notifications'),
+                        Text('2. Ensure Microsoft Edge is toggled on'),
+                        Text('3. Also check Edge site permissions:'),
+                        Text('   edge://settings/content/notifications'),
+                        Text('4. Make sure this site is not in the "Block" list'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
                 title: const Text('Windows / Chrome', style: TextStyle(fontWeight: FontWeight.bold)),
                 children: [
                   Padding(
@@ -226,9 +245,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text('1. Open Settings > System > Notifications'),
-                        Text('2. Ensure Chrome is toggled on'),
-                        Text('3. Also check Chrome\'s site notification settings:'),
+                        Text('1. Open Windows Settings > System > Notifications'),
+                        Text('2. Ensure Google Chrome is toggled on'),
+                        Text('3. Also check Chrome site permissions:'),
                         Text('   chrome://settings/content/notifications'),
                         Text('4. Make sure this site is not in the "Block" list'),
                       ],
@@ -245,10 +264,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text('1. Open Settings > Apps > Screen Time Checkup'),
+                        Text('1. Open Settings > Apps > find your browser'),
                         Text('2. Tap Notifications and enable them'),
-                        Text('3. Go to Settings > Battery > Battery Optimization'),
-                        Text('4. Find Screen Time Checkup and select "Don\'t optimize"'),
+                        Text('3. In your browser, open site settings for this page'),
+                        Text('4. Set Notifications to "Allow"'),
+                        Text('5. For reliable delivery: Settings > Battery > Battery Optimization'),
+                        Text('   Find your browser and select "Don\'t optimize"'),
                       ],
                     ),
                   ),
@@ -263,10 +284,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text('1. Click the lock/info icon in the address bar'),
-                        Text('2. Find Notifications and set to "Allow"'),
-                        Text('3. If stuck, click "Reset permissions" or clear site data'),
-                        Text('4. Reload the page and allow notifications when prompted'),
+                        Text('1. Click the padlock icon in the address bar'),
+                        Text('2. Find "Notifications" and set it to "Allow"'),
+                        Text('3. If notifications are greyed out, go to your browser\'s'),
+                        Text('   site settings and reset permissions for this page'),
+                        Text('4. Reload the page and tap "Allow" when prompted'),
                       ],
                     ),
                   ),
@@ -394,12 +416,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
-                  // TODO(human): add a DropdownButton<int> (or equivalent) here.
-                  // Call appState.updateSessionDuration(value) when the user picks.
-                  // Use appState.settings.sessionDurationMinutes as the current value.
-                  // Suggested options (minutes): 30, 60, 90, 120, 180, 240, 480.
-                  // Format the labels nicely (e.g. "30 min", "1 hour", "2 hours").
-                  DropdownButton<int>(value:120, items: const [
+                  DropdownButton<int>(value: appState.settings.sessionDurationMinutes, items: const [
                     DropdownMenuItem(value: 30, child: Text('30 min')),
                     DropdownMenuItem(value: 60, child: Text('1 hour')),
                     DropdownMenuItem(value: 90, child: Text('1.5 hours')),

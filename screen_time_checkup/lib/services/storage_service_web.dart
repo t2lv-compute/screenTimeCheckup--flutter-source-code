@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:web/web.dart' as web;
 import '../models/app_settings.dart';
 import '../models/log_entry.dart';
+import 'encryption_service.dart';
 import 'storage_service_interface.dart';
 import 'logger_service.dart';
 
@@ -10,6 +11,11 @@ class StorageServiceImpl implements StorageServiceInterface {
   static const String _logsKey = 'screen_time_logs';
   static const String _notificationTapKey = 'screen_time_notification_tap';
   final _logger = LoggerService();
+  final _encryption = EncryptionService();
+
+  // Lazily initialized once on first use; all public methods await this.
+  late final Future<void> _initFuture = _encryption.init();
+  Future<void> _ensureInit() => _initFuture;
 
   // In-memory cache for logs
   List<LogEntry>? _logsCache;
@@ -17,10 +23,29 @@ class StorageServiceImpl implements StorageServiceInterface {
 
   web.Storage get _localStorage => web.window.localStorage;
 
+  /// Reads and decrypts a stored value.
+  /// Falls back to plaintext for migration and immediately re-encrypts,
+  /// so the data is protected on all subsequent reads.
+  String? _read(String storageKey) {
+    final raw = _localStorage.getItem(storageKey);
+    if (raw == null) return null;
+    final decrypted = _encryption.decrypt(raw);
+    if (decrypted == null) {
+      // Legacy plaintext — re-encrypt immediately.
+      _localStorage.setItem(storageKey, _encryption.encrypt(raw));
+      return raw;
+    }
+    return decrypted;
+  }
+
+  void _write(String storageKey, String plaintext) =>
+      _localStorage.setItem(storageKey, _encryption.encrypt(plaintext));
+
   @override
   Future<AppSettings> loadSettings() async {
+    await _ensureInit();
     try {
-      final data = _localStorage.getItem(_settingsKey);
+      final data = _read(_settingsKey);
       if (data == null) {
         _logger.debug('No settings found, using defaults', 'StorageWeb');
         return AppSettings();
@@ -36,9 +61,9 @@ class StorageServiceImpl implements StorageServiceInterface {
 
   @override
   Future<void> saveSettings(AppSettings settings) async {
+    await _ensureInit();
     try {
-      final json = jsonEncode(settings.toJson());
-      _localStorage.setItem(_settingsKey, json);
+      _write(_settingsKey, jsonEncode(settings.toJson()));
       _logger.debug('Settings saved successfully', 'StorageWeb');
     } catch (e, stack) {
       _logger.error('Failed to save settings', e, stack, 'StorageWeb');
@@ -48,13 +73,14 @@ class StorageServiceImpl implements StorageServiceInterface {
 
   @override
   Future<List<LogEntry>> loadLogs() async {
+    await _ensureInit();
     if (_cacheValid && _logsCache != null) {
       _logger.debug('Returning ${_logsCache!.length} logs from cache', 'StorageWeb');
       return List.from(_logsCache!);
     }
 
     try {
-      final data = _localStorage.getItem(_logsKey);
+      final data = _read(_logsKey);
       if (data == null) {
         _logger.debug('No logs found, returning empty list', 'StorageWeb');
         _logsCache = [];
@@ -77,10 +103,9 @@ class StorageServiceImpl implements StorageServiceInterface {
 
   @override
   Future<void> saveLogs(List<LogEntry> logs) async {
+    await _ensureInit();
     try {
-      final jsonList = logs.map((log) => log.toJson()).toList();
-      final json = jsonEncode(jsonList);
-      _localStorage.setItem(_logsKey, json);
+      _write(_logsKey, jsonEncode(logs.map((log) => log.toJson()).toList()));
       _invalidateCache();
       _logger.debug('Saved ${logs.length} logs', 'StorageWeb');
     } catch (e, stack) {
@@ -91,21 +116,13 @@ class StorageServiceImpl implements StorageServiceInterface {
 
   @override
   Future<void> addLog(LogEntry log) async {
-    // Ensure cache is populated
+    await _ensureInit();
+    // Ensure cache is populated before modifying it.
     if (!_cacheValid) await loadLogs();
     _logsCache!.add(log);
-
-    // Optimized append to JSON string - avoids parsing/serializing entire list
     try {
-      final existing = _localStorage.getItem(_logsKey);
-      String newJson;
-      if (existing == null || existing == '[]') {
-        newJson = '[${jsonEncode(log.toJson())}]';
-      } else {
-        // Append to existing JSON array: remove trailing ']', add comma and new entry
-        newJson = '${existing.substring(0, existing.length - 1)},${jsonEncode(log.toJson())}]';
-      }
-      _localStorage.setItem(_logsKey, newJson);
+      // Encryption requires full re-serialise (can't string-append ciphertext).
+      _write(_logsKey, jsonEncode(_logsCache!.map((l) => l.toJson()).toList()));
       _logger.debug('Appended log entry', 'StorageWeb');
     } catch (e, stack) {
       _logger.error('Failed to add log', e, stack, 'StorageWeb');
@@ -132,8 +149,9 @@ class StorageServiceImpl implements StorageServiceInterface {
 
   @override
   Future<void> saveNotificationTapTime(DateTime time) async {
+    await _ensureInit();
     try {
-      _localStorage.setItem(_notificationTapKey, time.toIso8601String());
+      _write(_notificationTapKey, time.toIso8601String());
       _logger.debug('Notification tap time saved', 'StorageWeb');
     } catch (e, stack) {
       _logger.error('Failed to save notification tap time', e, stack, 'StorageWeb');
@@ -142,8 +160,9 @@ class StorageServiceImpl implements StorageServiceInterface {
 
   @override
   Future<DateTime?> loadNotificationTapTime() async {
+    await _ensureInit();
     try {
-      final data = _localStorage.getItem(_notificationTapKey);
+      final data = _read(_notificationTapKey);
       if (data == null) return null;
       return DateTime.parse(data);
     } catch (e, stack) {

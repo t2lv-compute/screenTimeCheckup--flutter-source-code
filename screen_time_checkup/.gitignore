@@ -120,3 +120,19 @@ app.*.symbols
 
 build/
 claude_chat.txt
+
+# Secrets — never commit these
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+serviceAccountKey.json
+google-services.json
+GoogleService-Info.plist
+*secret*
+*credential*
+*_token*
+*_api_key*
