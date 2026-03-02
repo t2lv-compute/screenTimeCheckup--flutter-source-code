@@ -24,12 +24,12 @@
        require HTTP headers — not enforceable from a meta tag on GitHub Pages. -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
-                 script-src 'self' 'wasm-unsafe-eval' blob:;
+                 script-src 'self' 'wasm-unsafe-eval' blob: https://www.gstatic.com;
                  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
                  img-src 'self' data: blob:;
                  worker-src 'self' blob:;
-                 connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;
+                 connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://www.gstatic.com;
                  object-src 'none';
                  base-uri 'self';">
 
@@ -51,20 +51,7 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <script>
-    // Redirect Flutter's automatic service worker registration to sw.js.
-    // sw.js wraps flutter_service_worker.js (via importScripts) and adds
-    // notification action button support (snooze without opening the app).
-    if ('serviceWorker' in navigator) {
-      const _orig = navigator.serviceWorker.register.bind(navigator.serviceWorker);
-      navigator.serviceWorker.register = (url, options) => {
-        if (typeof url === 'string' && url.includes('flutter_service_worker')) {
-          return _orig('sw.js', options);
-        }
-        return _orig(url, options);
-      };
-    }
-  </script>
+  <script src="sw_intercept.js"></script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

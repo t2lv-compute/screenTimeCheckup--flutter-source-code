@@ -64,7 +64,7 @@ if ($status) {
 if (Test-Path "screen_time_checkup") {
     pushd screen_time_checkup
     Write-Header "STEP 2: BUILDING FLUTTER WEB"
-    Invoke-SafeCommand { flutter build web --base-href /screentimecheckup/ }
+    Invoke-SafeCommand { flutter build web --base-href "/screentimecheckup/" --no-web-resources-cdn }
     
     # 3. Deploy to GitHub Pages
     Write-Header "STEP 3: DEPLOYING TO GITHUB PAGES"
@@ -88,7 +88,7 @@ if (Test-Path "screen_time_checkup") {
     exit 1
 }
 
-Write-Host "DEPLOYMENT COMPLETED SUCCESSFULLY!" -BackgroundColor Green
+Write-Host "DEPLOYMENT COMPLETED SUCCESSFULLY!" -ForegroundColor Black -BackgroundColor Green
 
 if ($run) {
     Write-Header "Opening localhost:8080 in browser for testing..."
