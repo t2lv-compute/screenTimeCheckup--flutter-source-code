@@ -44,7 +44,7 @@ class EncryptionService {
       final index = value.indexOf('.');
       final iv = IV(base64Decode(value.substring(0,index)));
       final encrypter = Encrypter(AES(_key!));
-      final decrypted = encrypter.decrypt64(value.substring(value.indexOf('.')),iv:iv);
+      final decrypted = encrypter.decrypt64(value.substring(index + 1), iv: iv);
       return decrypted;
     } catch (e) {
       return null;

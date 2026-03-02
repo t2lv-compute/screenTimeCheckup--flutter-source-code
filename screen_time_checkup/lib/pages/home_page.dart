@@ -548,6 +548,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (!_intentionPromptShown &&
+        appState.settings.hasSeenTutorial &&
         appState.settings.sessionIntention.isEmpty) {
       _intentionPromptShown = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {

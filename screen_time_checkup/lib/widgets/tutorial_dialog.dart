@@ -26,7 +26,9 @@ class _TutorialDialogState extends State<TutorialDialog> {
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -119,6 +121,7 @@ class _TutorialDialogState extends State<TutorialDialog> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

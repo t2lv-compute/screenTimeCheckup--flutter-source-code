@@ -189,6 +189,10 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: ((MediaQuery.of(context).size.width - 480) / 2).clamp(24.0, double.infinity),
+          vertical: 24,
+        ),
         title: const Text('Troubleshoot'),
         content: SingleChildScrollView(
           child: Column(
