@@ -667,6 +667,14 @@ class _SettingsPageState extends State<SettingsPage> {
                             final json = await _fileService.pickAndReadJsonFile();
                             if (json != null) {
                               final success = await appState.importLogsFromJson(json);
+                              if (success) {
+                                setState(() {
+                                  _intervalController.text =
+                                      appState.settings.checkInIntervalMinutes.toString();
+                                  _intentionController.text =
+                                      appState.settings.sessionIntention;
+                                });
+                              }
                               messenger.showSnackBar(
                                 SnackBar(
                                   content: Text(success
